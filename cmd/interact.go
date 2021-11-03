@@ -86,7 +86,7 @@ func pollForNewTaskResults(){
             }
             PendingTaskQueue.results[idx].Result = task.Result
             //idxArray = append(idxArray,idx)
-            fmt.Printf("\n::: %s ::: \n\n%s\n",task.Id,task.Result)
+            fmt.Printf("\n::: Result ::: \n%s\n",task.Result)
         }
         PendingTaskQueue.Unlock()
         time.Sleep(time.Second * 5)
@@ -115,7 +115,7 @@ func chooseAgent(c *grumble.Context) error {
 func agentShell() error {
 	reader := bufio.NewReader(os.Stdin)
 	for {
-		fmt.Printf(CurrentAgent.agent.Metadata.Username+ "@" + CurrentAgent.agent.Metadata.Hostname+ " > ")
+        fmt.Printf(CurrentAgent.agent.Metadata.ID + ":::" + CurrentAgent.agent.Metadata.Username + "@" + CurrentAgent.agent.Metadata.Hostname + " > ")
 		tmp, err := reader.ReadString('\n')
 		if err != nil {
             CurrentAgent.Lock()
@@ -210,7 +210,6 @@ func handleSimpleTask(cmd string,agent_id string) error {
 	if err != nil {
 		return err
 	}
-	fmt.Printf("%+v\n",taskid)
     r := TaskResult{
         Id: taskid,
         Result: "",
@@ -218,8 +217,6 @@ func handleSimpleTask(cmd string,agent_id string) error {
     PendingTaskQueue.Lock()
     PendingTaskQueue.results = append(PendingTaskQueue.results,r)
     PendingTaskQueue.Unlock()
-	// add taskid to pending tasks Queue
-	//
 	return nil 
 }
 
@@ -250,7 +247,6 @@ func handleMediumTask(cmd string,agent_id string) error {
 	if err != nil {
 		return err
 	}
-	fmt.Printf("%+v\n",taskid)
     r := TaskResult{
         Id: taskid,
         Result: "",
@@ -258,8 +254,6 @@ func handleMediumTask(cmd string,agent_id string) error {
     PendingTaskQueue.Lock()
     PendingTaskQueue.results = append(PendingTaskQueue.results,r)
     PendingTaskQueue.Unlock()
-	// add taskid to pending tasks Queue
-	//
 	return nil 
 }
 func handleComplexTask(cmd string,agent_id string) error{
@@ -271,7 +265,6 @@ func handleComplexTask(cmd string,agent_id string) error{
 	if err != nil {
 		return err
 	}
-	fmt.Printf("%+v\n",taskid)
     r := TaskResult{
         Id: taskid,
         Result: "",
@@ -279,8 +272,6 @@ func handleComplexTask(cmd string,agent_id string) error{
     PendingTaskQueue.Lock()
     PendingTaskQueue.results = append(PendingTaskQueue.results,r)
     PendingTaskQueue.Unlock()
-	// add taskid to pending tasks Queue
-	//
 	return nil 
 }
 
@@ -294,7 +285,6 @@ func handleDefaultShellTask(args string, agent_id string) error {
 	if err != nil {
 		return err
 	}
-	fmt.Printf("%+v\n",taskid)
     r := TaskResult{
         Id: taskid,
         Result: "",
@@ -302,7 +292,5 @@ func handleDefaultShellTask(args string, agent_id string) error {
     PendingTaskQueue.Lock()
     PendingTaskQueue.results = append(PendingTaskQueue.results,r)
     PendingTaskQueue.Unlock()
-	// add taskid to pending tasks Queue
-	//
 	return nil 
 }

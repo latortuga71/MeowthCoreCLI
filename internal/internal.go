@@ -110,7 +110,6 @@ func PostTask(route string, payload interface{}) (error,string){
         fmt.Printf("Error %s",err)
         return err,""
     }
-    fmt.Println(string(jsonPayload))
     jsonBuffer := bytes.NewBuffer(jsonPayload)
     resp , err := c.Post(route,"application/json",jsonBuffer)
     if resp.StatusCode == 404 {
