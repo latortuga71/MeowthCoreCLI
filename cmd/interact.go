@@ -40,6 +40,7 @@ var medium_modules = [...]string {
 	"admin-check",
 }
 var complex_modules = [...]string {
+    "upload",
 	"shinject",
 	"execute-assembly",
 	"spawn-inject",
