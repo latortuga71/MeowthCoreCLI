@@ -45,11 +45,31 @@ func init(){
             a.String("name","listener name")
         },
     })
+
+    listenerCommand.AddCommand(&grumble.Command{
+        Name:"delete",
+        Help:"Delete listener",
+        Run: deleteListeners,
+        Args: func (a *grumble.Args){
+            a.String("name","listener name")
+        },
+    })
 }
 
-func deleteLiseners(c *grumble.Context) error {
-    return nil 
-    // to do
+func deleteListeners(c *grumble.Context) error {
+	name := c.Args.String("name")
+	var listener Listeners
+	target := fmt.Sprintf("%s%s%s",FullServerURI,"Listeners/",name)
+	err := internal.Delete(target, &listener)
+	if err != nil {
+		return err
+	}
+	_, err = json.Marshal(listener)
+	if err != nil {
+		return err
+	}
+	fmt.Println("OK")
+    return nil
 }
 
 func getListeners(c *grumble.Context) error {

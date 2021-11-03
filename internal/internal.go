@@ -26,6 +26,23 @@ func StringIn (a string,list []string) bool {
     return false
 }
 
+func Delete(route string, output interface{}) error {
+    c := http.Client{
+        Timeout:time.Duration(1) * time.Second,
+    }
+    req, err := http.NewRequest("DELETE", route,nil)
+    if err != nil {
+        fmt.Println(err)
+        return err
+    }
+    resp, err := c.Do(req)
+    if err != nil {
+        fmt.Printf("Error %s ",err)
+        return err
+    }
+    defer resp.Body.Close()
+    return nil
+}
 
 func Get(route string, output interface{}) error {
     c := http.Client{
