@@ -47,22 +47,61 @@ func Post(route string,payload interface{}) error {
     c := http.Client{
         Timeout:time.Duration(1) * time.Second,
     }
-    json,err := json.Marshal(payload)
+    jsonPayload,err := json.Marshal(payload)
     if err != nil {
         fmt.Printf("Error %s",err)
         return err 
     }
-    fmt.Println(string(json))
-    jsonBuffer := bytes.NewBuffer(json)
+    fmt.Println(string(jsonPayload))
+    jsonBuffer := bytes.NewBuffer(jsonPayload)
     resp , err := c.Post(route,"application/json",jsonBuffer)
     if err != nil {
         fmt.Printf("Error %s ",err)
         return err 
     }
     defer resp.Body.Close()
+    dec := json.NewDecoder(resp.Body);
+    var output interface{}
+    err = dec.Decode(&output)
+    payload = output
     if err != nil {
         fmt.Printf("Error %s ", err)
     }
+    out,err := json.Marshal(output)
+    if err != nil {
+        fmt.Printf("Error %s",err)
+        return err 
+    }
+    fmt.Println(string(out))
     return nil
+}
 
+
+func PostTask(route string, payload interface{}) (error,string){
+    c := http.Client{
+        Timeout:time.Duration(1) * time.Second,
+    }
+    jsonPayload,err := json.Marshal(payload)
+    if err != nil {
+        fmt.Printf("Error %s",err)
+        return err,""
+    }
+    fmt.Println(string(jsonPayload))
+    jsonBuffer := bytes.NewBuffer(jsonPayload)
+    resp , err := c.Post(route,"application/json",jsonBuffer)
+    if err != nil {
+        fmt.Printf("Error %s ",err)
+        return err,"" 
+    }
+    defer resp.Body.Close()
+    dec := json.NewDecoder(resp.Body);
+    var output struct{
+        TaskId string `json:"id"`
+    }
+    err = dec.Decode(&output)
+    payload = output
+    if err != nil {
+        fmt.Printf("Error %s ", err)
+    }
+    return nil,output.TaskId
 }

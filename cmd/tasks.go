@@ -15,6 +15,7 @@ type TaskResult struct {
 }
 
 type Task struct {
+    TaskId string `json:"id"`
 	Command string   `json:"command"`
 	Args    []string `json:"args"`
 	File    string   `json:"file"`

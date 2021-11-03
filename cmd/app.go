@@ -13,11 +13,15 @@ var ServerIP string
 var ServerPort string
 var FullServerURI string
 var ServerSet bool
+var PendingTaskQueue struct {
+	sync.Mutex
+	results []TaskResult
+}
 var AgentList struct {
     sync.Mutex
     agents []Agent
 }
-var CurrentAgentId string
+var CurrentAgent *Agent 
 
 var App = grumble.New(&grumble.Config{
 	Name:                  "meowth",
@@ -35,18 +39,4 @@ func CheckConnection() bool {
 }
 
 func init() {
-    /*CmdArgs := os.Args[1:]
-    if len(CmdArgs) < 2 {
-        fmt.Println("cli <ip> <port>")
-    }
-    var serverPtr string
-    var portPtr string
-    serverPtr = os.Args[1]
-    portPtr = os.Args[2]
-    //flag.StringVar(&serverPtr,"h","","ip of c2 server")
-    //flag.StringVar(&portPtr,"p","","port of c2 server")
-    //flag.Parse()
-    FullServerURI = fmt.Sprintf("http://%s:%d/",serverPtr,portPtr)
-    ServerSet = true
-    */
 }
