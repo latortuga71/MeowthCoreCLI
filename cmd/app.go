@@ -13,6 +13,7 @@ var ServerIP string
 var ServerPort string
 var FullServerURI string
 var ServerSet bool
+var NewAgentsServiceOn bool
 var PendingTaskQueue struct {
 	sync.Mutex
 	results []TaskResult
@@ -21,7 +22,10 @@ var AgentList struct {
     sync.Mutex
     agents []Agent
 }
-var CurrentAgent *Agent 
+var CurrentAgent struct {
+    sync.Mutex
+    agent *Agent
+}
 
 var App = grumble.New(&grumble.Config{
 	Name:                  "meowth",

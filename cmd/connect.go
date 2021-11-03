@@ -58,18 +58,29 @@ func pollForNewAgents(initialRun bool) {
     }
 }
 func connect(c *grumble.Context) error {
+    if NewAgentsServiceOn {
+        fmt.Printf("Already Connected...\n")
+        return nil
+    }
+    client := http.Client{
+        Timeout:time.Duration(1) * time.Second,
+    }
     host := c.Args.String("ip")
     port := c.Args.Int("port")
     FullServerURI = fmt.Sprintf("http://%s:%d/",host,port)
     fmt.Printf("Connecting.... %s:%d\n",host,port)
-    resp,err := http.Get(FullServerURI + "Agents")
-    if resp.StatusCode == 200 && err == nil {
+    resp,err := client.Get(FullServerURI + "Agents")
+    if err != nil {
+        return errors.New("Failed to connect to server") 
+    }
+    if resp.StatusCode == 200 {
         ServerSet = true
         fmt.Println("Successfully connected to server")
         fmt.Println("Starting agents discovery goroutine...")
         // run once to get whoevers already connected
         pollForNewAgents(true) 
         // run again for new incoming agents
+        NewAgentsServiceOn = true
         go pollForNewAgents(false)
         return nil
     }

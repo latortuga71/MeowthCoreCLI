@@ -3,7 +3,9 @@ package internal
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"log"
 	"net/http"
 	"time"
 )
@@ -76,6 +78,27 @@ func Post(route string,payload interface{}) error {
     return nil
 }
 
+func GetResult(route string, output interface{}) error {
+    c := http.Client{
+        Timeout:time.Duration(1) * time.Second,
+    }
+    resp, err := c.Get(route)
+    if resp.StatusCode == 404 {
+        return errors.New("Not Found")
+    }
+    if err != nil {
+        fmt.Printf("Error %s ",err)
+        return err
+    }
+    defer resp.Body.Close()
+    dec := json.NewDecoder(resp.Body);
+    err = dec.Decode(&output)
+    if err != nil {
+        fmt.Printf("Error %s ",err)
+        return err
+    }
+    return nil
+}
 
 func PostTask(route string, payload interface{}) (error,string){
     c := http.Client{
@@ -83,13 +106,18 @@ func PostTask(route string, payload interface{}) (error,string){
     }
     jsonPayload,err := json.Marshal(payload)
     if err != nil {
+        log.Println("A")
         fmt.Printf("Error %s",err)
         return err,""
     }
     fmt.Println(string(jsonPayload))
     jsonBuffer := bytes.NewBuffer(jsonPayload)
     resp , err := c.Post(route,"application/json",jsonBuffer)
+    if resp.StatusCode == 404 {
+        return errors.New("Not Found"),""
+    }
     if err != nil {
+        log.Println("B")
         fmt.Printf("Error %s ",err)
         return err,"" 
     }
@@ -101,6 +129,7 @@ func PostTask(route string, payload interface{}) (error,string){
     err = dec.Decode(&output)
     payload = output
     if err != nil {
+        log.Println("C")
         fmt.Printf("Error %s ", err)
     }
     return nil,output.TaskId

