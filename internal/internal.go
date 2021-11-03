@@ -2,11 +2,13 @@ package internal
 
 import (
 	"bytes"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"time"
 )
 
@@ -132,4 +134,13 @@ func PostTask(route string, payload interface{}) (error,string){
         fmt.Printf("Error %s ", err)
     }
     return nil,output.TaskId
+}
+
+func ConvertFileToBase64(path string) (error,string){
+    fileBytes, err := os.ReadFile(path)
+    if err != nil {
+        return err,""
+    }
+    fileb64 := base64.StdEncoding.EncodeToString(fileBytes)
+    return nil,fileb64
 }

@@ -106,7 +106,6 @@ func chooseAgent(c *grumble.Context) error {
 		return err
 	}
 	CurrentAgent.agent = &AgentList.agents[idx]
-    fmt.Println("Starting background goroutine...")
     go pollForNewTaskResults()
 	agentShell()
     return nil
@@ -257,9 +256,41 @@ func handleMediumTask(cmd string,agent_id string) error {
 	return nil 
 }
 func handleComplexTask(cmd string,agent_id string) error{
-	task := &Task{
-		Command: cmd,
-	}
+    // get args for medium task
+    var argString string
+    var filePath string
+    var cmdArgs []string
+    var task *Task
+    prompt := promptui.Prompt{
+        Label: "Arguments",
+        Default: argString,
+    }
+    result,_ := prompt.Run()
+    if result != "" {
+        cmdArgs = strings.Split(result," ")
+	    task = &Task{
+	    	Command: cmd,
+            Args:cmdArgs,
+	    }
+    } else {
+	    task = &Task{
+	    	Command: cmd,
+	    }
+    }
+    promptFile := promptui.Prompt{
+        Label: "File",
+        Default:filePath,
+    }
+    resultPath , _  := promptFile.Run()
+    // ConvertFile to base64
+    if _, err := os.Stat(resultPath); os.IsNotExist(err){
+        return err
+    }
+    err, b64File := internal.ConvertFileToBase64(resultPath)
+    if err != nil {
+        return err 
+    }
+    task.File = b64File
 	target := fmt.Sprintf("%s%s%s",FullServerURI,"Agents/",agent_id)
 	err,taskid:= internal.PostTask(target,&task)	
 	if err != nil {
