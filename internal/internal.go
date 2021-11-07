@@ -16,7 +16,6 @@ import (
 // create functions for get requests
 // to make it a simple function call to get the data back before converting to struct
 
-
 func StringIn (a string,list []string) bool {
     for _,b := range list {
         if b == a {
@@ -102,12 +101,12 @@ func GetResult(route string, output interface{}) error {
         Timeout:time.Duration(1) * time.Second,
     }
     resp, err := c.Get(route)
-    if resp.StatusCode == 404 {
-        return errors.New("Not Found")
-    }
     if err != nil {
         fmt.Printf("Error %s ",err)
         return err
+    }
+    if resp.StatusCode == 404 {
+        return errors.New("Not Found")
     }
     defer resp.Body.Close()
     dec := json.NewDecoder(resp.Body);
@@ -125,7 +124,6 @@ func PostTask(route string, payload interface{}) (error,string){
     }
     jsonPayload,err := json.Marshal(payload)
     if err != nil {
-        log.Println("A")
         fmt.Printf("Error %s",err)
         return err,""
     }
@@ -147,7 +145,6 @@ func PostTask(route string, payload interface{}) (error,string){
     err = dec.Decode(&output)
     payload = output
     if err != nil {
-        log.Println("C")
         fmt.Printf("Error %s ", err)
     }
     return nil,output.TaskId

