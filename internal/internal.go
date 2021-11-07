@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
 	"net/http"
 	"os"
 	"time"
@@ -31,12 +30,10 @@ func Delete(route string, output interface{}) error {
     }
     req, err := http.NewRequest("DELETE", route,nil)
     if err != nil {
-        fmt.Println(err)
         return err
     }
     resp, err := c.Do(req)
     if err != nil {
-        fmt.Printf("Error %s ",err)
         return err
     }
     defer resp.Body.Close()
@@ -49,14 +46,12 @@ func Get(route string, output interface{}) error {
     }
     resp, err := c.Get(route)
     if err != nil {
-        fmt.Printf("Error %s ",err)
         return err
     }
     defer resp.Body.Close()
     dec := json.NewDecoder(resp.Body);
     err = dec.Decode(&output)
     if err != nil {
-        fmt.Printf("Error %s ",err)
         return err
     }
     return nil
@@ -69,14 +64,12 @@ func Post(route string,payload interface{}) error {
     }
     jsonPayload,err := json.Marshal(payload)
     if err != nil {
-        fmt.Printf("Error %s",err)
         return err 
     }
     fmt.Println(string(jsonPayload))
     jsonBuffer := bytes.NewBuffer(jsonPayload)
     resp , err := c.Post(route,"application/json",jsonBuffer)
     if err != nil {
-        fmt.Printf("Error %s ",err)
         return err 
     }
     defer resp.Body.Close()
@@ -85,11 +78,10 @@ func Post(route string,payload interface{}) error {
     err = dec.Decode(&output)
     payload = output
     if err != nil {
-        fmt.Printf("Error %s ", err)
+        return err 
     }
     out,err := json.Marshal(output)
     if err != nil {
-        fmt.Printf("Error %s",err)
         return err 
     }
     fmt.Println(string(out))
@@ -102,7 +94,6 @@ func GetResult(route string, output interface{}) error {
     }
     resp, err := c.Get(route)
     if err != nil {
-        fmt.Printf("Error %s ",err)
         return err
     }
     if resp.StatusCode == 404 {
@@ -112,7 +103,6 @@ func GetResult(route string, output interface{}) error {
     dec := json.NewDecoder(resp.Body);
     err = dec.Decode(&output)
     if err != nil {
-        fmt.Printf("Error %s ",err)
         return err
     }
     return nil
@@ -124,7 +114,6 @@ func PostTask(route string, payload interface{}) (error,string){
     }
     jsonPayload,err := json.Marshal(payload)
     if err != nil {
-        fmt.Printf("Error %s",err)
         return err,""
     }
     jsonBuffer := bytes.NewBuffer(jsonPayload)
@@ -133,8 +122,6 @@ func PostTask(route string, payload interface{}) (error,string){
         return errors.New("Not Found"),""
     }
     if err != nil {
-        log.Println("B")
-        fmt.Printf("Error %s ",err)
         return err,"" 
     }
     defer resp.Body.Close()
@@ -143,10 +130,10 @@ func PostTask(route string, payload interface{}) (error,string){
         TaskId string `json:"id"`
     }
     err = dec.Decode(&output)
-    payload = output
     if err != nil {
-        fmt.Printf("Error %s ", err)
+        return err,"" 
     }
+    payload = output
     return nil,output.TaskId
 }
 

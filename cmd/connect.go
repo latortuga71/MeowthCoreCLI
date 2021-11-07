@@ -35,8 +35,9 @@ func pollForNewAgents(initialRun bool) error {
 	    err := internal.Get(target, &agents)
 	    if err != nil {
             // continue if server goes offline etc
-            fmt.Println("C2 connection lost.")
+            fmt.Println("[!] C2 connection lost.")
             NewAgentsServiceOn = false
+            ServerSet = false
             return err
 	    }
         // loop through local agent ids and save to map
