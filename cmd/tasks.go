@@ -74,6 +74,7 @@ func listTasks(c *grumble.Context) error{
 		return err
 	}
 	for _,t := range tasks{
+        t.Result = ""
 		data, err := json.Marshal(t)
 		if err != nil {
 			return err
