@@ -15,6 +15,7 @@ import (
 )
 var simple_modules = [...]string{
 	"whoami",
+    "screenshot",
 	"ps",
 	"lsa",
 	"ping",
@@ -259,6 +260,7 @@ func handleSimpleTask(cmd string,agent_id string) error {
 
 
 func handleMediumTask(cmd string,agent_id string) error {
+    handleHelpMessage(cmd)
     // get args for medium task
     var argString string
     var cmdArgs []string
@@ -294,6 +296,7 @@ func handleMediumTask(cmd string,agent_id string) error {
 	return nil 
 }
 func handleComplexTask(cmd string,agent_id string) error{
+    handleHelpMessage(cmd)
     // get args for medium task
     var argString string
     var filePath string
@@ -362,4 +365,75 @@ func handleDefaultShellTask(args string, agent_id string) error {
     PendingTaskQueue.results = append(PendingTaskQueue.results,r)
     PendingTaskQueue.Unlock()
 	return nil 
+}
+
+
+func handleHelpMessage(cmd string){
+    switch cmd {
+        case "ls":
+            fmt.Printf("%s REQUIRED [ <> ] OPTIONAL [ <path> ] NOTES -> { escape backslashes } \n",cmd)
+            break
+        case "admin-check":
+            fmt.Printf("%s REQUIRED [ <targetIP> ] OPTIONAL [ <> ] NOTES -> { HOSTNAME or IP can be provided }\n",cmd)
+            break
+        case "cd":
+            fmt.Printf("%s REQUIRED [ <> ] OPTIONAL [ <path> ] NOTES -> { escape backslashes no arg will show home dir } \n",cmd)
+            break
+        case "rmdir":
+            fmt.Printf("%s REQUIRED [ <path> ] OPTIONAL [ <> ] NOTES -> { escape backslashes } \n",cmd)
+            break
+        case "download":
+            fmt.Printf("%s REQUIRED [ <path> ] OPTIONAL [ <> ] NOTES -> { escape backslashes } \n",cmd)
+            break
+        case "enable-priv":
+            fmt.Printf("%s REQUIRED [ <privilege> ] OPTIONAL [ <> ] NOTES -> { CASE SENSITIVE SeDebugPrivilege } \n",cmd)
+            break
+        case "fileless-lateral":
+            fmt.Printf("%s REQUIRED [ <target> <payload string> ] OPTIONAL [ <> ] NOTES -> { target can be ip or hostname payload string should be full path to cmd and full path to powershell  } \n",cmd)
+            break
+        case "ping-sweep":
+            fmt.Printf("%s REQUIRED [ </24 subnet> ] OPTIONAL [ <> ] NOTES -> { 10.10.10.10/24 }\n",cmd)
+            break
+        case "process-hellow":
+            fmt.Printf("%s REQUIRED [ <ppid> <fullPathToBinary> ] OPTIONAL [ <> ] NOTES -> { fullpath must be escaped }\n",cmd)
+            break
+        case "run":
+            fmt.Printf("%s REQUIRED [ <fullPathToBinary> ] OPTIONAL [ <> ] NOTES -> { fullpath must be escaped }\n",cmd)
+            break
+        case "runas":
+            fmt.Printf("%s REQUIRED [ <domain\\username> <password> ] OPTIONAL [ <> ] NOTES -> { to specify localhost use .\\username }\n",cmd)
+            break
+        case "shell":
+            fmt.Printf("%s REQUIRED [ <args> ] OPTIONAL [ <> ] NOTES -> { args passed to cmd.exe /c {args}}\n",cmd)
+            break
+        case "shinject":
+            fmt.Printf("%s REQUIRED [ <pid> ] OPTIONAL [ <> ] NOTES -> { TO SELF INJECT provide pid as 0 }\n",cmd)
+            break
+        case "spawn-inject":
+            fmt.Printf("%s REQUIRED [ <exeToSpawn> ] OPTIONAL [ <> ] NOTES -> { Full path to exe to spawn }\n",cmd)
+            break
+        case "steal-token":
+            fmt.Printf("%s REQUIRED [ <pid> ] OPTIONAL [ <> ] NOTES -> { enum-tokens to see what can be stolen }\n",cmd)
+            break
+        case "turtle-dump":
+            fmt.Printf("%s REQUIRED [ <path to write dump> ] OPTIONAL [ <> ] NOTES -> { full path to dump file, include dump file name in path -> C:\\temp\\out.dmp } \n",cmd)
+            break
+        case "unhook-dll":
+            fmt.Printf("%s REQUIRED [ <pid> <fullPathToDllToReplace> ] OPTIONAL [ <> ] NOTES -> { To unhook current process provide pid as 0 } \n",cmd)
+            break
+        case "upload":
+            fmt.Printf("%s REQUIRED [ <path> ] OPTIONAL [ <> ] NOTES -> { full path to out dir and include file name in path - > C:\\temp\\uploadedFile.txt } \n",cmd)
+            break
+        case "sleep":
+            fmt.Printf("%s REQUIRED [ <minutes> ] OPTIONAL [ <> ] NOTES -> { sleep in minutes } \n",cmd)
+            break
+        case "set-jitter":
+            fmt.Printf("%s REQUIRED [ <seconds> ] OPTIONAL [ <> ] NOTES -> { set the jitter on the implant in seconds} \n",cmd)
+            break
+        case "execute-assembly":
+            fmt.Printf("%s REQUIRED [ <> ] OPTIONAL [ <assembly args> ] NOTES -> { args are how you would pass if you ran the assembly in a terminal } \n",cmd)
+            break
+        default:
+            break
+    }
 }

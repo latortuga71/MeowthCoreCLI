@@ -66,7 +66,6 @@ func Post(route string,payload interface{}) error {
     if err != nil {
         return err 
     }
-    fmt.Println(string(jsonPayload))
     jsonBuffer := bytes.NewBuffer(jsonPayload)
     resp , err := c.Post(route,"application/json",jsonBuffer)
     if err != nil {

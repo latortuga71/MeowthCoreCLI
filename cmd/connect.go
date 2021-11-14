@@ -35,7 +35,8 @@ func pollForNewAgents(initialRun bool) error {
 	    err := internal.Get(target, &agents)
 	    if err != nil {
             // continue if server goes offline etc
-            fmt.Println("[!] C2 connection lost.")
+            fmt.Printf("[!] C2 connection lost. %s\n",err.Error())
+            fmt.Printf("Reconnect using the connect command\n")
             NewAgentsServiceOn = false
             ServerSet = false
             return err
@@ -80,7 +81,6 @@ func connect(c *grumble.Context) error {
     if resp.StatusCode == 200 {
         ServerSet = true
         fmt.Println("Successfully connected to server")
-        fmt.Println("Starting agents discovery goroutine...")
         // run once to get whoevers already connected
         pollForNewAgents(true) 
         // run again for new incoming agents
