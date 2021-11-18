@@ -55,6 +55,8 @@ var complex_modules = [...]string {
     "process-hollow",
 	"shinject",
 	"execute-assembly",
+	"execute-assembly-unload",
+    "run-pwsh-script",
 	"spawn-inject",
 }
 
@@ -93,7 +95,7 @@ func pollForNewTaskResults(){
 	        if err != nil {
                 continue
 	        }
-            if len(strings.TrimSpace(task.Result)) == 0{
+            if len(strings.TrimSpace(task.Result)) == 0 {
                 task.Result = "Complete"
             }
             if (strings.Contains(task.Result,"MEOWTHDOWNLOAD")){
@@ -432,6 +434,12 @@ func handleHelpMessage(cmd string){
             break
         case "execute-assembly":
             fmt.Printf("%s REQUIRED [ <> ] OPTIONAL [ <assembly args> ] NOTES -> { args are how you would pass if you ran the assembly in a terminal } \n",cmd)
+            break
+        case "execute-assembly-unload":
+            fmt.Printf("%s REQUIRED [ <> ] OPTIONAL [ <assembly args> ] NOTES -> { args are how you would pass if you ran the assembly in a terminal } \n",cmd)
+            break
+        case "run-pwsh-script":
+            fmt.Printf("%s REQUIRED [ <path to script> ] OPTIONAL [ <> ] NOTES -> { } \n",cmd)
             break
         default:
             break
