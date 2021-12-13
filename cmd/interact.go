@@ -15,6 +15,9 @@ import (
 )
 var simple_modules = [...]string{
 	"whoami",
+    "list-services",
+    "port-forward-revert",
+    "die",
     "screenshot",
 	"ps",
 	"lsa",
@@ -33,6 +36,8 @@ var simple_modules = [...]string{
 
 var medium_modules = [...]string {
     "sleep",
+    "kill-process",
+    "port-forward",
     "set-jitter",
 	"runas",
 	"run",
@@ -58,6 +63,7 @@ var complex_modules = [...]string {
 	"execute-assembly-unload",
     "run-pwsh-script",
 	"spawn-inject",
+    "spawn-inject-ex",
 }
 
 
@@ -414,6 +420,9 @@ func handleHelpMessage(cmd string){
         case "spawn-inject":
             fmt.Printf("%s REQUIRED [ <exeToSpawn> ] OPTIONAL [ <> ] NOTES -> { Full path to exe to spawn }\n",cmd)
             break
+        case "spawn-inject-ex":
+            fmt.Printf("%s REQUIRED [ <ppid> <pathToExe> ] OPTIONAL [ <> ] NOTES -> { Full path to exe to spawn, parent process id spoof }\n",cmd)
+            break
         case "steal-token":
             fmt.Printf("%s REQUIRED [ <pid> ] OPTIONAL [ <> ] NOTES -> { enum-tokens to see what can be stolen }\n",cmd)
             break
@@ -440,6 +449,12 @@ func handleHelpMessage(cmd string){
             break
         case "run-pwsh-script":
             fmt.Printf("%s REQUIRED [ <path to script> ] OPTIONAL [ <> ] NOTES -> { } \n",cmd)
+            break
+        case "port-forward":
+            fmt.Printf("%s REQUIRED [ <listenPort> <listenAddress> <connectPort> <connectAddress> ] OPTIONAL [ <> ] NOTES -> { } \n",cmd)
+            break
+        case "kill-process":
+            fmt.Printf("%s REQUIRED [ <pid> ] OPTIONAL [ <> ] NOTES -> { } \n",cmd)
             break
         default:
             break
